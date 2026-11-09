@@ -6,7 +6,7 @@ Le 3 novembre 2026, Entra ID a arrêté de recalculer les règles dynamiques qui
 
 ![PowerShell 5.1 | 7.x](https://img.shields.io/badge/PowerShell-5.1%20%7C%207.x-5391FE) ![Audit en lecture seule](https://img.shields.io/badge/audit-lecture%20seule-2ea44f) ![Licence MIT](https://img.shields.io/badge/licence-MIT-lightgrey)
 
-L'article qui accompagne ce dépôt : [creaskill.mccool.fr](https://creaskill.mccool.fr/).
+L'article qui accompagne ce dépôt : [creaskill.mccool.fr](https://creaskill.mccool.fr/my-entra-dynamic-group-member-off-removed/).
 
 ## Sommaire
 
