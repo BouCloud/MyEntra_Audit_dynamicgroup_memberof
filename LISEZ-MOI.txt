@@ -1,0 +1,47 @@
+Publication de l'audit memberOf
+===============================
+
+1-GitHub   ce qui part sur GitHub
+2-Blog     ce qui part sur le blog WordPress
+
+Commencer par GitHub : l'article renvoie vers le dépôt.
+
+
+1. GitHub
+---------
+
+Contenu de 1-GitHub\MyEntra_Audit_dynamicgroup_memberof (9 fichiers) :
+  Invoke-EntraMemberOfAudit.ps1, README.md, LICENSE, .gitignore,
+  docs\exemple\rapport-anonymise.html, docs\images\ (4 captures)
+
+a. Dans PowerShell, avec Git pour Windows installé :
+     cd <dossier>\1-GitHub
+     Unblock-File .\Publier-sur-GitHub.ps1
+     .\Publier-sur-GitHub.ps1
+
+   Le script :
+   - montre la liste des fichiers et demande confirmation ;
+   - installe GitHub CLI avec winget s'il manque (après accord) ;
+   - ouvre la connexion GitHub dans le navigateur et vérifie le compte BouCloud ;
+   - crée le dépôt public s'il n'existe pas (après accord) ;
+   - pousse.
+   Il refuse de publier si un rapport (.xlsx, .log, .csv) traîne dans le dossier.
+
+b. Pour republier plus tard : modifier les fichiers dans le dossier, puis relancer
+     .\Publier-sur-GitHub.ps1 -Message "ce qui a changé"
+
+
+2. Blog
+-------
+
+a. Médiathèque WordPress : téléverser les 4 fichiers de 2-Blog\images
+   (et l'image d'en-tête générée avec prompt-image-copilot.txt).
+
+b. Nouvel article : ajouter un bloc « HTML personnalisé » et y coller
+   le contenu de article-blog.html.
+
+c. Aperçu : vérifier que les 4 captures s'affichent. Elles pointent vers
+   /wp-content/uploads/2026/11/ ; si WordPress les a rangées ailleurs,
+   corriger les 4 adresses dans le bloc.
+
+d. Publier.
