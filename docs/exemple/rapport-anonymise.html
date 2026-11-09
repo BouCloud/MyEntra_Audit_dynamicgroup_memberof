@@ -1,0 +1,215 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Audit memberOf</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Barlow+Condensed:wght@500;600&family=JetBrains+Mono&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#1f2933;--ink-soft:#52606d;--paper:#e9edf0;--sheet:#f8f9fa;--rule:#cbd2d9;
+  --tape:#f5c518;--tape-ink:#1f2933;
+  --crit:#c8322b;--high:#b8730a;--mid:#5b6773;
+  --code:#1f2933;--code-ink:#e4e7eb;
+}
+@media (prefers-color-scheme:dark){:root{
+  --ink:#e4e7eb;--ink-soft:#9aa5b1;--paper:#1b2229;--sheet:#232c35;--rule:#3a4652;
+  --crit:#f0645c;--high:#e5a33a;--mid:#9aa5b1;--code:#151b21;
+}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.55 "Atkinson Hyperlegible",system-ui,sans-serif}
+.wrap{max-width:1180px;margin:0 auto;padding:0 20px}
+.tape{display:inline-block;background:var(--tape);color:var(--tape-ink);font-family:"Barlow Condensed",system-ui,sans-serif;font-weight:600;line-height:1.15;padding:3px 11px 4px;border-radius:2px;box-shadow:0 1px 0 rgba(0,0,0,.2)}
+header.top{padding:40px 0 8px}
+header.top h1{margin:0;font-size:clamp(30px,5vw,46px);transform:rotate(-1deg);transform-origin:left center}
+.summary{max-width:66ch;margin:22px 0 8px;font-size:19px;line-height:1.5}
+.summary .c{color:var(--crit);font-weight:700}
+.summary .warn{display:block;margin-top:8px;font-size:16px;color:var(--high)}
+.meta{color:var(--ink-soft);font-size:14px;margin:0}
+nav.tabs{display:flex;gap:4px;border-bottom:2px solid var(--ink);margin-top:26px}
+nav.tabs button{font:600 19px/1 "Barlow Condensed",system-ui,sans-serif;background:none;border:2px solid transparent;border-bottom:0;color:var(--ink-soft);padding:10px 16px 8px;margin-bottom:-2px;border-radius:4px 4px 0 0;cursor:pointer}
+nav.tabs button.on{color:var(--ink);background:var(--sheet);border-color:var(--ink);border-bottom:2px solid var(--sheet)}
+button:focus-visible,input:focus-visible,select:focus-visible,a:focus-visible{outline:3px solid var(--tape);outline-offset:2px}
+main{padding:24px 0 36px}
+.tools{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:34px}
+.tools input,.tools select{font:inherit;font-size:15px;color:var(--ink);background:var(--sheet);border:1px solid var(--rule);border-radius:4px;padding:9px 12px;flex:1 1 240px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:38px 22px;align-items:start}
+.fiche{position:relative;background:var(--sheet);border:1px solid var(--rule);border-top:4px solid var(--mid);border-radius:4px;padding:30px 18px 16px}
+.fiche.crit{border-top-color:var(--crit)}
+.fiche.high{border-top-color:var(--high)}
+.fiche>.tape{position:absolute;top:-17px;left:14px;font-size:20px;max-width:calc(100% - 28px);overflow-wrap:anywhere}
+.fiche .line{display:flex;justify-content:space-between;gap:12px;font-size:14px;color:var(--ink-soft)}
+.lvl{font-weight:700;white-space:nowrap}
+.lvl.crit{color:var(--crit)}
+.lvl.high{color:var(--high)}
+pre.rule{margin:12px 0 8px;background:var(--code);color:var(--code-ink);font:12.5px/1.5 "JetBrains Mono",ui-monospace,monospace;padding:10px 12px;border-radius:3px;white-space:pre-wrap;word-break:break-all}
+.src{font-size:14px;color:var(--ink-soft);margin:0 0 12px}
+.usage{border-left:5px solid var(--c,#8795a1);padding:3px 0 3px 12px;margin:12px 0}
+.usage h4{margin:0;font:600 17px/1.2 "Barlow Condensed",system-ui,sans-serif}
+.usage h4 small{font:400 13px "Atkinson Hyperlegible",system-ui,sans-serif;color:var(--ink-soft);margin-left:6px}
+.usage ul{list-style:none;margin:3px 0 0;padding:0}
+.usage li{font-size:15px;padding:2px 0;overflow-wrap:anywhere}
+.usage li span{color:var(--ink-soft);font-size:13px}
+.usage a{color:inherit;font-size:13px;text-decoration-color:var(--tape);text-decoration-thickness:2px;text-underline-offset:3px;margin-left:6px}
+.todo{margin:16px 0 0;padding-top:12px;border-top:1px dashed var(--rule);font-size:14px}
+.todo b{font:600 16px "Barlow Condensed",system-ui,sans-serif;margin-right:4px}
+.none{color:var(--ink-soft);font-size:15px}
+#net{height:72vh;min-height:440px;background:var(--sheet);border:1px solid var(--rule);border-radius:4px}
+.legend{display:flex;flex-wrap:wrap;gap:6px 18px;margin-top:12px;font-size:14px;color:var(--ink-soft)}
+.legend i{display:inline-block;width:20px;height:5px;border-radius:3px;vertical-align:middle;margin-right:6px}
+.empty{color:var(--ink-soft);padding:32px;text-align:center}
+footer{color:var(--ink-soft);font-size:13px;padding:0 0 32px}
+@media (prefers-reduced-motion:no-preference){
+  header.top h1{animation:stick .45s cubic-bezier(.2,.8,.3,1.2) both}
+  @keyframes stick{from{opacity:0;transform:rotate(-5deg) translateY(-8px)}to{opacity:1;transform:rotate(-1deg)}}
+}
+@media (max-width:520px){.grid{grid-template-columns:1fr}.summary{font-size:17px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header class="top">
+  <h1 class="tape">Audit memberOf</h1>
+  <p class="summary" id="summary"></p>
+  <p class="meta" id="meta"></p>
+</header>
+<nav class="tabs" aria-label="Vues">
+  <button data-tab="cards" class="on">Fiches par objet</button>
+  <button data-tab="map">Carte des dépendances</button>
+</nav>
+<main>
+  <section id="cards">
+    <div class="tools">
+      <input id="q" type="search" placeholder="Chercher un groupe, une stratégie, une application, un site" aria-label="Chercher">
+      <select id="fam" aria-label="Type d'usage"><option value="">Tous les usages</option></select>
+    </div>
+    <div class="grid" id="grid"></div>
+  </section>
+  <section id="map" hidden>
+    <div id="net"></div>
+    <div class="legend" id="legend"></div>
+  </section>
+</main>
+<footer>Rapport généré en lecture seule par Invoke-EntraMemberOfAudit.ps1, référence Microsoft MC1448379.</footer>
+</div>
+<script>const DATA = {"meta": {"tenant": "CONTOSO", "date": "04/11/2026 23:30", "daysLeft": 0, "version": "1.2.1", "groups": 3, "aus": 0, "em": 0, "deps": 24, "critical": 1, "errors": 0, "families": ["Licences", "Accès conditionnel", "Rôles", "MFA / authentification", "Intune", "Applications", "Teams", "SharePoint", "Exchange", "Règles chaînées", "Entitlement Management", "B2B", "Imbrication", "Revues d'accès", "Autre"]}, "objects": [{"id": "23b8c1e9-3924-46de-beb1-3b9046685257", "name": "GRP-TOUS-365", "type": "Groupe", "rule": "user.memberof -any (group.objectid -in ['bdd640fb-0667-4ad1-9c80-317fa3b1799d'])", "crit": "Critique", "members": 358, "reco": "Sources synchronisées AD : poser un attribut côté AD (extensionAttribute1-15, department...) répliqué par Entra Connect, puis règle attributaire (ex. user.extensionAttribute5 -eq \"XXX\").", "sources": [{"id": "bdd640fb-0667-4ad1-9c80-317fa3b1799d", "name": "GG-TOUS"}], "deps": [{"family": "Accès conditionnel", "category": "Accès conditionnel", "element": "CA-Utilisateurs-iOS-Applications", "elementId": "bd9c66b3-ad3c-4d6d-9a3d-1fa7bc8960a9", "mode": "Inclusion", "detail": "État : enabled", "crit": "Critique"}, {"family": "Applications", "category": "Application d'entreprise", "element": "Visioconférence", "elementId": "972a8469-1641-4f82-8b9d-2434e465e150", "mode": "Affectation", "detail": "AppRoleId : 17fc695a-07a0-4a6e-8822-e8f36c031199", "crit": "Élevée"}, {"family": "Applications", "category": "Application d'entreprise", "element": "Outil de tickets support", "elementId": "9a1de644-815e-46d1-bb8f-aa1837f8a88b", "mode": "Affectation", "detail": "AppRoleId : b74d0fb1-32e7-4629-8fad-c1a606cb0fb3", "crit": "Élevée"}, {"family": "Applications", "category": "Application d'entreprise", "element": "Portail RH", "elementId": "6b65a6a4-8b81-48f6-b38a-088ca65ed389", "mode": "Affectation", "detail": "AppRoleId : 17fc695a-07a0-4a6e-8822-e8f36c031199", "crit": "Élevée"}, {"family": "Applications", "category": "Application d'entreprise", "element": "Application de tickets RUN", "elementId": "47378190-96da-4dac-b2ff-5d2a386ecbe0", "mode": "Affectation", "detail": "AppRoleId : 17fc695a-07a0-4a6e-8822-e8f36c031199", "crit": "Élevée"}, {"family": "Applications", "category": "Application d'entreprise", "element": "Console de gestion de parc", "elementId": "c241330b-01a9-471f-9e8a-774bcf36d58b", "mode": "Affectation", "detail": "AppRoleId : 17fc695a-07a0-4a6e-8822-e8f36c031199", "crit": "Élevée"}, {"family": "Applications", "category": "Application d'entreprise", "element": "Annuaire interne", "elementId": "6c307511-b2b9-437a-a8df-6ec4ce4a2bbd", "mode": "Affectation", "detail": "AppRoleId : 17fc695a-07a0-4a6e-8822-e8f36c031199", "crit": "Élevée"}, {"family": "Applications", "category": "Application d'entreprise", "element": "Extranet client", "elementId": "371ecd7b-27cd-4130-8722-9389571aa876", "mode": "Affectation", "detail": "AppRoleId : 17fc695a-07a0-4a6e-8822-e8f36c031199", "crit": "Élevée"}, {"family": "Applications", "category": "Application d'entreprise", "element": "ITSM (préproduction)", "elementId": "1a2a73ed-562b-4f79-8374-59eef50bea63", "mode": "Affectation", "detail": "AppRoleId : 5be6128e-18c2-4797-a142-ea7d17be3111", "crit": "Élevée"}, {"family": "Applications", "category": "Application d'entreprise", "element": "ITSM (développement)", "elementId": "43b7a3a6-9a8d-4a03-980d-7b71d8f56413", "mode": "Affectation", "detail": "AppRoleId : 5be6128e-18c2-4797-a142-ea7d17be3111", "crit": "Élevée"}, {"family": "Applications", "category": "Application d'entreprise", "element": "ITSM (production)", "elementId": "759cde66-bacf-43d0-8b1f-9163ce9ff57f", "mode": "Affectation", "detail": "AppRoleId : 5be6128e-18c2-4797-a142-ea7d17be3111", "crit": "Élevée"}, {"family": "Applications", "category": "Application d'entreprise", "element": "Téléphonie", "elementId": "ec1b8ca1-f91e-4d4c-9ff4-9b7889463e85", "mode": "Affectation", "detail": "AppRoleId : 17fc695a-07a0-4a6e-8822-e8f36c031199", "crit": "Élevée"}, {"family": "Applications", "category": "Application d'entreprise", "element": "Portail opérateur", "elementId": "4b0dbb41-8d52-48f1-942c-3fe860e7a113", "mode": "Affectation", "detail": "AppRoleId : 17fc695a-07a0-4a6e-8822-e8f36c031199", "crit": "Élevée"}, {"family": "Applications", "category": "Application d'entreprise", "element": "Supervision", "elementId": "e2acf72f-9e57-4f7a-a0ee-89aed453dd32", "mode": "Affectation", "detail": "AppRoleId : 17fc695a-07a0-4a6e-8822-e8f36c031199", "crit": "Élevée"}, {"family": "Applications", "category": "Application d'entreprise", "element": "Notes de frais", "elementId": "3139d32c-93cd-49bf-9c94-1cf0dc98d2c1", "mode": "Affectation", "detail": "AppRoleId : 17fc695a-07a0-4a6e-8822-e8f36c031199", "crit": "Élevée"}, {"family": "Applications", "category": "Application d'entreprise", "element": "Gestion documentaire", "elementId": "a9488d99-0bbb-4599-91ce-5dd2b45ed1f0", "mode": "Affectation", "detail": "AppRoleId : 17fc695a-07a0-4a6e-8822-e8f36c031199", "crit": "Élevée"}, {"family": "Applications", "category": "Application d'entreprise", "element": "Portail interne", "elementId": "fc377a4c-4a15-444d-85e7-ce8a3a578a8e", "mode": "Affectation", "detail": "AppRoleId : 17fc695a-07a0-4a6e-8822-e8f36c031199", "crit": "Élevée"}, {"family": "Applications", "category": "Application d'entreprise", "element": "Emailing", "elementId": "ddd1dfb2-3b98-4ef8-9af6-1a26146d3f31", "mode": "Affectation", "detail": "AppRoleId : 17fc695a-07a0-4a6e-8822-e8f36c031199", "crit": "Élevée"}, {"family": "Applications", "category": "Application d'entreprise", "element": "CAO", "elementId": "7412b293-4729-4739-a14f-f3d719db3ad0", "mode": "Affectation", "detail": "AppRoleId : 17fc695a-07a0-4a6e-8822-e8f36c031199", "crit": "Élevée"}, {"family": "Applications", "category": "Application d'entreprise", "element": "Gestion de projets", "elementId": "29a3b2e9-5d65-4441-9588-42dea2bc372f", "mode": "Affectation", "detail": "AppRoleId : 17fc695a-07a0-4a6e-8822-e8f36c031199", "crit": "Élevée"}, {"family": "Applications", "category": "Application d'entreprise", "element": "Tableau de bord client", "elementId": "ab9099a4-35a2-40ae-9af3-05535ec42e08", "mode": "Affectation", "detail": "AppRoleId : 17fc695a-07a0-4a6e-8822-e8f36c031199", "crit": "Élevée"}, {"family": "Applications", "category": "Application d'entreprise", "element": "Téléphonie (préprod SSO)", "elementId": "aefcfad8-efc8-4849-b3aa-7efe4458a885", "mode": "Affectation", "detail": "AppRoleId : b74d0fb1-32e7-4629-8fad-c1a606cb0fb3", "crit": "Élevée"}, {"family": "Applications", "category": "Application d'entreprise", "element": "Portail RH (SSO)", "elementId": "a28defe3-9bf0-4273-9247-6f57a5e5a5ab", "mode": "Affectation", "detail": "AppRoleId : b74d0fb1-32e7-4629-8fad-c1a606cb0fb3", "crit": "Élevée"}]}, {"id": "451b4cf3-6123-4df7-b656-af7229d4beef", "name": "GRP-SIGNATURE-365", "type": "Groupe", "rule": "user.memberof -any (group.objectId -in ['3eabedcb-baa8-4dd4-88bd-64072bcfbe01']) ", "crit": "-", "members": 357, "reco": "Sources synchronisées AD : poser un attribut côté AD (extensionAttribute1-15, department...) répliqué par Entra Connect, puis règle attributaire (ex. user.extensionAttribute5 -eq \"XXX\").", "sources": [{"id": "3eabedcb-baa8-4dd4-88bd-64072bcfbe01", "name": "GG-SIGNATURE-MAIL"}], "deps": []}, {"id": "e27a984d-6548-41d0-bfcd-9eb1a7cad415", "name": "GRP-BASTION-ADMINS", "type": "Groupe", "rule": "user.memberof -any (group.objectId -in ['b02b61c4-a3d7-4628-ace6-6fa2fd5166e6', '5304317f-af42-412f-b838-b3268e944239', '0e51f30d-c6a7-4e39-84b0-32ccd7c524a5', 'ce177b4e-0837-48a3-9261-a7ab3aa2e4f9', '10f1bc81-448a-4a9e-a6b2-bc5b50c187fc', '9132b63e-f162-47e4-a9c3-49e03602f8ac', '366eb16f-508e-4ad7-b7c9-3acfe059a0ee'])", "crit": "Élevée", "members": 20, "reco": "Sources synchronisées AD : poser un attribut côté AD (extensionAttribute1-15, department...) répliqué par Entra Connect, puis règle attributaire (ex. user.extensionAttribute5 -eq \"XXX\").", "sources": [{"id": "b02b61c4-a3d7-4628-ace6-6fa2fd5166e6", "name": "GG-BASTION-N1"}, {"id": "5304317f-af42-412f-b838-b3268e944239", "name": "GG-BASTION-N3"}, {"id": "0e51f30d-c6a7-4e39-84b0-32ccd7c524a5", "name": "GG-BASTION-APP-A"}, {"id": "ce177b4e-0837-48a3-9261-a7ab3aa2e4f9", "name": "GG-BASTION-APP-B"}, {"id": "10f1bc81-448a-4a9e-a6b2-bc5b50c187fc", "name": "GG-BASTION-APP-C"}, {"id": "9132b63e-f162-47e4-a9c3-49e03602f8ac", "name": "GG-BASTION-APP-D"}, {"id": "366eb16f-508e-4ad7-b7c9-3acfe059a0ee", "name": "GG-BASTION-STOCKAGE"}], "deps": [{"family": "Applications", "category": "Application d'entreprise", "element": "Bastion d'administration (SSO)", "elementId": "24933b83-7577-40a9-a491-f0b2ea1fca65", "mode": "Affectation", "detail": "AppRoleId : b74d0fb1-32e7-4629-8fad-c1a606cb0fb3", "crit": "Élevée"}]}]};</script>
+<script>
+// Couleurs des cordons de brassage : une couleur par type d'usage, identique dans les fiches et la carte
+const FAM = {"Licences":"#8e44ad","Accès conditionnel":"#c0392b","Rôles":"#1f78c1","MFA / authentification":"#d6589f","Intune":"#2e8b57","Applications":"#1aa3b8","Teams":"#5b5fc7","SharePoint":"#138a8a","Exchange":"#8b5a2b","Règles chaînées":"#e07b1a","Entitlement Management":"#c99a00","B2B":"#a0526a","Imbrication":"#8795a1","Revues d'accès":"#6b8e23","Autre":"#8795a1"};
+const LINK = {"Teams":"ouvrir dans Teams","SharePoint":"ouvrir le site"};
+const arr = x => Array.isArray(x) ? x : (x == null ? [] : [x]);
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const cls = c => c === 'Critique' ? 'crit' : c === 'Élevée' ? 'high' : '';
+const plural = (n, one, many) => `${n} ${n > 1 ? many : one}`;
+const order = arr(DATA.meta.families);
+const objects = arr(DATA.objects);
+const m = DATA.meta;
+
+document.getElementById('summary').innerHTML =
+  `${plural(m.groups, 'groupe', 'groupes')}, ${plural(m.aus, 'unité administrative', 'unités administratives')} et ${plural(m.em, 'stratégie EM', 'stratégies EM')} utilisent memberOf. ` +
+  `L'audit a trouvé ${plural(m.deps, 'usage', 'usages')}, dont <span class="c">${plural(m.critical, 'critique', 'critiques')}</span>. ` +
+  `Ces objets ne seront plus recalculés à partir du 3 novembre 2026, ${m.daysLeft > 0 ? 'dans ' + plural(m.daysLeft, 'jour', 'jours') : 'échéance passée'}.` +
+  (m.errors > 0 ? `<span class="warn">${plural(m.errors, 'collecte a échoué', 'collectes ont échoué')} : l'audit est incomplet, voir l'onglet Erreurs collecte du classeur Excel.</span>` : '');
+document.getElementById('meta').textContent = `Tenant ${m.tenant}, audit du ${m.date}, script v${m.version}`;
+
+const famSel = document.getElementById('fam');
+order.filter(f => objects.some(o => arr(o.deps).some(d => d.family === f)))
+     .forEach(f => famSel.insertAdjacentHTML('beforeend', `<option>${esc(f)}</option>`));
+
+function fiche(o) {
+  const by = {};
+  arr(o.deps).forEach(d => { (by[d.family] = by[d.family] || []).push(d); });
+  const fams = Object.keys(by).sort((a, b) => order.indexOf(a) - order.indexOf(b));
+  const usages = fams.map(f => `<section class="usage" style="--c:${FAM[f] || '#8795a1'}">
+      <h4>${esc(f)}<small>${by[f].length}</small></h4>
+      <ul>${by[f].map(d => `<li>${esc(d.element || d.category)}${d.mode ? ` <span>${esc(d.mode)}</span>` : ''}${
+        /^https?:\/\//.test(d.detail || '') ? `<a href="${esc(d.detail)}" target="_blank" rel="noopener">${LINK[f] || 'ouvrir'}</a>` : ''}</li>`).join('')}</ul>
+    </section>`).join('');
+  const src = arr(o.sources).map(s => esc(s.name)).join(', ');
+  const level = o.crit === '-' ? 'Aucun usage trouvé' : o.crit;
+  const members = o.members != null ? `, ${plural(o.members, 'membre', 'membres')}` : '';
+  return `<article class="fiche ${cls(o.crit)}">
+    <span class="tape">${esc(o.name)}</span>
+    <div class="line"><span>${esc(o.type)}${members}</span><span class="lvl ${cls(o.crit)}">${esc(level)}</span></div>
+    <pre class="rule">${esc(o.rule)}</pre>
+    <p class="src">Groupes sources : ${src || 'aucun résolu'}</p>
+    ${usages || '<p class="none">Aucun usage trouvé dans le tenant.</p>'}
+    <p class="todo"><b>À faire</b>${esc(o.reco)}</p>
+  </article>`;
+}
+
+function renderCards() {
+  const q = document.getElementById('q').value.trim().toLowerCase();
+  const f = famSel.value;
+  const rank = {'Critique':3, 'Élevée':2, 'Moyenne':1};
+  const list = objects
+    .filter(o => (!q || JSON.stringify(o).toLowerCase().includes(q)) && (!f || arr(o.deps).some(d => d.family === f)))
+    .sort((a, b) => (rank[b.crit] || 0) - (rank[a.crit] || 0) || a.name.localeCompare(b.name));
+  document.getElementById('grid').innerHTML = list.map(fiche).join('') ||
+    (objects.length ? '<p class="empty">Aucun objet ne correspond à cette recherche.</p>' : '<p class="empty">Aucun objet n\'utilise memberOf dans ce tenant.</p>');
+}
+document.getElementById('q').addEventListener('input', renderCards);
+famSel.addEventListener('change', renderCards);
+renderCards();
+
+let network = null;
+function renderMap() {
+  if (network) return;
+  const el = document.getElementById('net');
+  if (!window.vis) { el.innerHTML = '<p class="empty">La carte a besoin de la bibliothèque vis-network, qui n\'a pas pu être chargée (poste hors ligne ?). Les fiches restent utilisables.</p>'; return; }
+  if (!objects.length) { el.innerHTML = '<p class="empty">Aucun objet n\'utilise memberOf : rien à cartographier.</p>'; return; }
+  const css = getComputedStyle(document.documentElement);
+  const v = n => css.getPropertyValue(n).trim();
+  const ink = v('--ink'), soft = v('--ink-soft');
+  const border = {'Critique':v('--crit'), 'Élevée':v('--high')};
+  const nodes = new Map(), edges = [];
+  const objIds = new Set(objects.map(o => o.id));
+  // Chaque groupe concerné est posé sur une grille, du plus utilisé au moins utilisé :
+  // seuls ses usages s'organisent autour de lui, les grappes ne se chevauchent pas.
+  const cols = Math.ceil(Math.sqrt(objects.length));
+  [...objects].sort((a, b) => arr(b.deps).length - arr(a.deps).length).forEach((o, i) => nodes.set('o:' + o.id, {
+    x:(i % cols) * 900, y:Math.floor(i / cols) * 750, fixed:true,
+    id:'o:' + o.id, label:o.name, shape:'box', margin:{top:8,bottom:8,left:12,right:12}, borderWidth:3,
+    widthConstraint:{maximum:200}, shapeProperties:{borderRadius:2},
+    color:{background:v('--tape'), border:border[o.crit] || v('--mid'), highlight:{background:v('--tape'), border:ink}},
+    font:{face:'Barlow Condensed', size:19, color:'#1f2933'}, title:`${o.type}, criticité ${o.crit}`
+  }));
+  objects.forEach(o => {
+    arr(o.sources).forEach(s => {
+      const sid = objIds.has(s.id) ? 'o:' + s.id : 's:' + s.id;
+      if (!nodes.has(sid)) nodes.set(sid, {id:sid, label:s.name, shape:'box', borderWidth:1, shapeProperties:{borderDashes:[4,3], borderRadius:2},
+        color:{background:v('--sheet'), border:soft}, font:{face:'Atkinson Hyperlegible', size:13, color:ink}, title:'Groupe source cité dans la règle'});
+      edges.push({from:sid, to:'o:' + o.id, arrows:{to:{scaleFactor:.6}}, dashes:[5,4], color:{color:soft}, width:1.5, title:'memberOf'});
+    });
+    arr(o.deps).forEach(d => {
+      if (d.family === 'Règles chaînées' && objIds.has(String(d.elementId || '').toLowerCase())) return;
+      const key = 'e:' + d.family + '|' + (d.elementId || d.element);
+      const c = FAM[d.family] || '#8795a1';
+      if (!nodes.has(key)) nodes.set(key, {id:key, label:d.element || d.category, shape:'dot', size:9, color:{background:c, border:c},
+        font:{face:'Atkinson Hyperlegible', size:13, color:ink}, widthConstraint:{maximum:170}, title:`${d.family} : ${d.category}`});
+      edges.push({from:'o:' + o.id, to:key, color:{color:c}, width:3, dashes:d.mode === 'Exclusion' ? [6,4] : false, title:d.mode || ''});
+    });
+  });
+  network = new vis.Network(el, {nodes:new vis.DataSet([...nodes.values()]), edges:new vis.DataSet(edges)}, {
+    physics:{solver:'forceAtlas2Based', forceAtlas2Based:{gravitationalConstant:-110, centralGravity:0.002, springLength:150, avoidOverlap:0.8}, stabilization:{iterations:400}},
+    interaction:{hover:true, tooltipDelay:120}, edges:{smooth:{type:'continuous'}}
+  });
+  // Une fois le calcul terminé : on fige la carte et on cadre tout dans la zone visible
+  network.once('stabilizationIterationsDone', () => { network.setOptions({physics:false}); network.fit({animation:false}); });
+  const used = order.filter(f => objects.some(o => arr(o.deps).some(d => d.family === f)));
+  document.getElementById('legend').innerHTML = used.map(f => `<span><i style="background:${FAM[f]}"></i>${esc(f)}</span>`).join('') +
+    '<span>Trait pointillé : lien memberOf ou exclusion</span>';
+}
+
+document.querySelectorAll('nav.tabs button').forEach(b => b.addEventListener('click', () => {
+  document.querySelectorAll('nav.tabs button').forEach(x => x.classList.toggle('on', x === b));
+  document.getElementById('cards').hidden = b.dataset.tab !== 'cards';
+  document.getElementById('map').hidden = b.dataset.tab !== 'map';
+  if (b.dataset.tab === 'map') renderMap();
+}));
+</script>
+<script src="https://unpkg.com/vis-network@9.1.9/standalone/umd/vis-network.min.js"></script>
+</body>
+</html>

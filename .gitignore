@@ -1,0 +1,4 @@
+# Résultats d'audit : ne jamais les publier (données du tenant)
+*.xlsx
+*.log
+*.csv
